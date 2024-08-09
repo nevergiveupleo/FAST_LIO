@@ -301,6 +301,10 @@ void Preprocess::velodyne_handler(const sensor_msgs::msg::PointCloud2::UniquePtr
 
   pcl::PointCloud<velodyne_ros::Point> pl_orig;
   pcl::fromROSMsg(*msg, pl_orig);
+  // remove nan data
+  pl_orig.is_dense = true;
+  std::vector<int> indices; indices.reserve(pl_orig.points.size());
+  pcl::removeNaNFromPointCloud(pl_orig, pl_orig, indices);
   int plsize = pl_orig.points.size();
   if (plsize == 0)
     return;

@@ -9,6 +9,8 @@ from launch.conditions import IfCondition
 
 from launch_ros.actions import Node
 
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.actions import IncludeLaunchDescription
 
 def generate_launch_description():
     package_path = get_package_share_directory('fast_lio')
@@ -31,7 +33,7 @@ def generate_launch_description():
         description='Yaml config file path'
     )
     decalre_config_file_cmd = DeclareLaunchArgument(
-        'config_file', default_value='mid360.yaml',
+        'config_file', default_value='velodyne.yaml',
         description='Config file'
     )
     declare_rviz_cmd = DeclareLaunchArgument(
@@ -57,6 +59,33 @@ def generate_launch_description():
         condition=IfCondition(rviz_use)
     )
 
+    static_transform1 = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='body_to_cam',
+        arguments=['0', '0', '0', '0', '0', '0', 'body', 'camera_link']
+    )
+
+    hesai_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+        get_package_share_directory('hesai_ros_driver'), '/launch/start.launch.py'
+    ]))
+
+    imu_node = Node(
+        package='imu_publisher',
+        executable='imu_publisher',
+        name='imu_publisher',
+        output='screen',
+    )
+
+    rs_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([get_package_share_directory('realsense2_camera'), '/launch/rs_launch.py']),
+        launch_arguments={
+            'enable_gyro': 'True',
+            'enable_accel': 'True'
+        }.items() 
+    )
+
     ld = LaunchDescription()
     ld.add_action(declare_use_sim_time_cmd)
     ld.add_action(declare_config_path_cmd)
@@ -66,5 +95,10 @@ def generate_launch_description():
 
     ld.add_action(fast_lio_node)
     ld.add_action(rviz_node)
+
+    ld.add_action(static_transform1)
+    ld.add_action(hesai_launch)
+    ld.add_action(imu_node)
+    # ld.add_action(rs_launch)
 
     return ld

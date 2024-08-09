@@ -341,7 +341,9 @@ void ImuProcess::Process(const MeasureGroup &meas,  esekfom::esekf<state_ikfom, 
   double t1,t2,t3;
   t1 = omp_get_wtime();
 
-  if(meas.imu.empty()) {return;};
+  if(meas.imu.empty()) {
+    std::cerr << "[ERROR | ImuProcess] IMU measurement is empty!!" << std::endl;
+    return;};
   assert(meas.lidar != nullptr);
 
   if (imu_need_init_)

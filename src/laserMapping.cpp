@@ -288,7 +288,7 @@ void standard_pcl_cbk(const sensor_msgs::msg::PointCloud2::UniquePtr msg)
     double preprocess_start_time = omp_get_wtime();
     if (!is_first_lidar && cur_time < last_timestamp_lidar)
     {
-        std::cerr << "lidar loop back, clear buffer" << std::endl;
+        std::cerr << "[standard pcl callback] lidar loop back, clear buffer" << std::endl;
         lidar_buffer.clear();
     }
     if (is_first_lidar)
@@ -367,7 +367,7 @@ void imu_cbk(const sensor_msgs::msg::Imu::UniquePtr msg_in)
 
     if (timestamp < last_timestamp_imu)
     {
-        std::cerr << "lidar loop back, clear buffer" << std::endl;
+        std::cerr << "[WARN | imu_cbk] lidar loop back, clear buffer" << std::endl;
         imu_buffer.clear();
     }
 
@@ -926,7 +926,7 @@ public:
         {
             sub_pcl_pc_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(lid_topic, rclcpp::SensorDataQoS(), standard_pcl_cbk);
         }
-        sub_imu_ = this->create_subscription<sensor_msgs::msg::Imu>(imu_topic, 10, imu_cbk);
+        sub_imu_ = this->create_subscription<sensor_msgs::msg::Imu>(imu_topic, rclcpp::SensorDataQoS(), imu_cbk);
         pubLaserCloudFull_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/cloud_registered", 20);
         pubLaserCloudFull_body_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/cloud_registered_body", 20);
         pubLaserCloudEffect_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/cloud_effected", 20);
@@ -982,7 +982,7 @@ private:
 
             if (feats_undistort->empty() || (feats_undistort == NULL))
             {
-                RCLCPP_WARN(this->get_logger(), "No point, skip this scan!\n");
+                RCLCPP_WARN(this->get_logger(), "feats_undistort unavailable, No point, skip this scan!\n");
                 return;
             }
 
@@ -1020,7 +1020,7 @@ private:
             /*** ICP and iterated Kalman filter update ***/
             if (feats_down_size < 5)
             {
-                RCLCPP_WARN(this->get_logger(), "No point, skip this scan!\n");
+                RCLCPP_WARN(this->get_logger(), "feats_down_size < 5, No point, skip this scan!\n");
                 return;
             }
             
@@ -1073,7 +1073,7 @@ private:
             if (scan_pub_en)      publish_frame_world(pubLaserCloudFull_);
             if (scan_pub_en && scan_body_pub_en) publish_frame_body(pubLaserCloudFull_body_);
             if (effect_pub_en) publish_effect_world(pubLaserCloudEffect_);
-            // if (map_pub_en) publish_map(pubLaserCloudMap_);
+            if (map_pub_en) publish_map(pubLaserCloudMap_);
 
             /*** Debug variables ***/
             if (runtime_pos_log)
